@@ -20,7 +20,7 @@ def enviar_localizacao(numero: str):
         'latitude': -15.5545813,
         'longitude': -49.9406908
     }
-    requests.post('https://chat.nside.com.br/message/sendLocation/556285792072-356960', headers=headers, json=body)
+    requests.post('https://chat.nside.com.br/message/sendLocation/556286427879-62986427879', headers=headers, json=body)
 
 
 def enviar_imagem_com_texto(nome: str, numero: str):
@@ -44,7 +44,7 @@ Estamos ansiosos para te receber! ☕📊'''
         'media': 'https://images2.imgbox.com/2f/f2/WVGTnTaM_o.jpeg',
         'fileName': 'convite.png'
     }
-    requests.post('https://chat.nside.com.br/message/sendMedia/556285792072-356960', headers=headers, json=body)
+    requests.post('https://chat.nside.com.br/message/sendMedia/556286427879-62986427879', headers=headers, json=body)
 
 
 @app.route('/')
