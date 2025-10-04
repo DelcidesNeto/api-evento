@@ -28,7 +28,7 @@ def enviar_imagem_com_texto(nome: str, numero: str):
     body_msg = f'''
 Olá, {nome} !  
 
-Sua inscrição no evento Coffee Break – Reforma Tributária e TEF em Goiás foi confirmada. ✅
+Sua inscrição no evento *Coffee Break – Reforma Tributária e TEF em Goiás* foi confirmada. ✅
 
 📅 Data: 29/10 (Quarta-Feira)
 ⏰ Horário: 15h
