@@ -327,8 +327,7 @@ Tenha uma boa noite de sono!'''
     
     
     def iniciar_observacao_do_ws(self):
-        @self.sio.on('messages.upsert')
-        def mensagem_recebida(req):
+        def procedure(req):
             instancia_api = req['instance']
             if instancia_api == instancia_antiga:
                 if not self.e_grupo(req) and not self.foi_eu_que_mandei(req):
@@ -347,6 +346,10 @@ Tenha uma boa noite de sono!'''
                         if self.e_horario_comercial(numero_formatado):
                             self.enviar_mensagem_cliente(numero=numero_formatado, instancia=instancia_nova)
                             self.enviar_mensagem_grupo(numero_formatado)
+        @self.sio.on('messages.upsert')
+        def mensagem_recebida(req):
+            threading.Thread(target=procedure, args=(req,), daemon=True).start()
+            
     # ==========================================
     # Seção de Requisições GET
     # ==========================================
