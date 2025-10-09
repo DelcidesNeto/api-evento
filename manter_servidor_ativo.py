@@ -5,10 +5,10 @@ import pytz, os, json
 
 sio = socketio.Client()
 
-url = 'http://localhost:8080'
-instancia_antiga = 'neto'
-instancia_nova = 'neto'
-apiKey = '429683C4C977415CAAFCCE10F7D57E11'
+url = 'https://chat.nside.com.br'
+instancia_antiga = '556285792072-356960'
+instancia_nova = '556285792072-356960'
+apiKey = '7hiEkUh2qbCNzoPSndk6vOnFvCmsVwILhN7xdJPVhgju8nagew8XD4DiytCyXg0dSzMpDafWhoc'
 
 clientes_que_chamaram = {}
 
@@ -137,7 +137,7 @@ Vimos que você mandou uma mensagem no contato do financeiro, sempre que precisa
         'number': numero,
         'text': body_msg
     }
-    requests.post(f'http://localhost:8080/message/sendText/{instancia}', headers=headers, json=body)
+    requests.post(f'{url}/message/sendText/{instancia}', headers=headers, json=body)
 
 def enviar_mensagem_grupo(numero: str): # instancia do número velho
 
@@ -149,13 +149,13 @@ def enviar_mensagem_grupo(numero: str): # instancia do número velho
         'number': '120363405878579813',
         'text': body_msg
     }
-    requests.post('http://localhost:8080/message/sendText/neto', headers=headers, json=body)
+    requests.post(f'{url}/message/sendText/{instancia_nova}', headers=headers, json=body)
 
 
 @sio.on('messages.upsert')
 def mensagem_recebida(req):
     instancia = req['instance']
-    if instancia == 'neto':
+    if instancia == instancia_antiga:
         if not e_grupo(req): #and not foi_eu_que_mandei(req)
             numero_api = req['data']['key']['remoteJid']
             numero_formatado = formatar_numero(numero_api)
@@ -191,22 +191,22 @@ def disconnect():
 
 
 #inicar_web_socket()
-data_hoje = datetime.today().astimezone(pytz.timezone('America/Sao_Paulo')).strftime('%d/%m/%Y')
-if e_feriado(data_hoje):
-    print('é feriado')
-else:
-    print('Não é feriado')
+# data_hoje = datetime.today().astimezone(pytz.timezone('America/Sao_Paulo')).strftime('%d/%m/%Y')
+# if e_feriado(data_hoje):
+#     print('é feriado')
+# else:
+#     print('Não é feriado')
 sio.connect(f'{url}/{instancia_antiga}', transports=['websocket'])
 sio.wait()
-from time import sleep
-requisicoes = 0
-print('Iniciando requisições...')
-while True:
-    try:
-        requests.get('https://api-evento-xf4o.onrender.com/')
-        requisicoes += 1
-        print(f'Requisição {requisicoes} feita com sucesso!')
-        sleep(300)
-    except Exception as e:
-        print(f'Erro: {e}')
-        input('')
+# from time import sleep
+# requisicoes = 0
+# print('Iniciando requisições...')
+# while True:
+#     try:
+#         requests.get('https://api-evento-xf4o.onrender.com/')
+#         requisicoes += 1
+#         print(f'Requisição {requisicoes} feita com sucesso!')
+#         sleep(300)
+#     except Exception as e:
+#         print(f'Erro: {e}')
+#         input('')

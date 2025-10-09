@@ -43,7 +43,7 @@ Estamos ansiosos para te receber!  ☕📊'''
         'mediatype': 'image',
         'mimetype': 'image/png',
         'caption': body_msg,
-        'media': 'https://images2.imgbox.com/f3/d0/RoJ2fWI0_o.jpeg',
+        'media': 'https://images2.imgbox.com/88/e3/RY031wPH_o.jpeg',
         'fileName': 'convite.png'
     }
     requests.post('https://chat.nside.com.br/message/sendMedia/556286427879-62986427879', headers=headers, json=body)

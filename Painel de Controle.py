@@ -15,10 +15,10 @@ from time import sleep
 clientes_que_chamaram = {}
 FERIADOS_FILE = os.path.join(os.getcwd(), "feriados_personalizados.json")
 URL_API = "https://api-evento-xf4o.onrender.com/"
-URL_WS = "http://localhost:8080"
-instancia_nova = "neto"
-instancia_antiga = 'neto'
-APIKEY = "429683C4C977415CAAFCCE10F7D57E11"
+URL_WS = "https://chat.nside.com.br"
+instancia_nova = "telefone-sistemas"
+instancia_antiga = '556286427879-62986427879'
+APIKEY = "7hiEkUh2qbCNzoPSndk6vOnFvCmsVwILhN7xdJPVhgju8nagew8XD4DiytCyXg0dSzMpDafWhoc"
 ws_rodando = False
 
 
@@ -47,6 +47,8 @@ class App(ctk.CTk):
 
         self.requisicoes_ativas = False
         self.carregar_feriados()
+        self.iniciar_ws_thread()
+        self.toggle_requisicoes()
     # =========================================
     # Seção funções do WebSocket
     # =========================================
@@ -72,11 +74,25 @@ class App(ctk.CTk):
 
     def enviar_mensagem_cliente(self, numero: str, instancia: str, body_msg=''): # passe a instancia do número novo
         if body_msg == '':
-            body_msg = f'''Olá!  
-Vimos que você mandou uma mensagem no contato do financeiro, sempre que precisar de suporte pode priorizar esses dois números:
-- (62) 3312-1502 — WhatsApp e chamadas 
-- (62) 99357-2050 — Somente WhatsApp
-*Já estamos transferindo você para um atendente, um momento...*'''
+            data_hoje = datetime.today().astimezone(pytz.timezone('America/Sao_Paulo'))
+            data_log = data_hoje.strftime('%d/%m/%Y %H:%M:%S')
+            # hora_minuto = data_hoje.now().time()
+            # if hora_minuto < time(12, 0):
+            #     periodo = 'Bom dia'
+            # elif hora_minuto >= time(12, 0) and hora_minuto < time(19, 0):
+            #     periodo = 'Boa tarde'
+            # else:
+            #     periodo = 'Boa Noite'
+            body_msg = f'''*[{data_log}]*
+
+Olá ! Tudo bem?  
+
+          Notamos que mandou uma mensagem em nosso contato destinado ao FINANCEIRO (62) 98642-7879. Sempre que precisar de SUPORTE pode priorizar esses dois contatos:
+- (62) 3312-1502 -- WhatsApp e chamadas 
+- (62) 99357-2050 - Somente WhatsApp
+
+
+_Aguarde. Você está sendo transferido para um atendente humano..._'''
         headers = {
             'apiKey': APIKEY
         }
@@ -84,7 +100,7 @@ Vimos que você mandou uma mensagem no contato do financeiro, sempre que precisa
             'number': numero,
             'text': body_msg
         }
-        requests.post(f'http://localhost:8080/message/sendText/{instancia}', headers=headers, json=body)
+        requests.post(f'{URL_WS}/message/sendText/{instancia}', headers=headers, json=body)
 
     def enviar_mensagem_grupo(self, numero: str): # instancia do número velho
 
@@ -96,7 +112,7 @@ Vimos que você mandou uma mensagem no contato do financeiro, sempre que precisa
             'number': '120363405878579813',
             'text': body_msg
         }
-        requests.post('http://localhost:8080/message/sendText/neto', headers=headers, json=body)
+        requests.post(f'{URL_WS}/message/sendText/{instancia_nova}', headers=headers, json=body)
 
 
     def foi_eu_que_mandei(self, dados: dict):
@@ -117,78 +133,152 @@ Vimos que você mandou uma mensagem no contato do financeiro, sempre que precisa
         result = True
         dias_da_semana = {0: 'Segunda', 1: 'Terça', 2: 'Quarta', 3: 'Quinta', 4: 'Sexta', 5: 'Sábado', 6: 'Domingo'}
         data_hoje = datetime.today().astimezone(pytz.timezone('America/Sao_Paulo'))
+        data_log = data_hoje.strftime('%d/%m/%Y %H:%M:%S')
         dia_da_semana = dias_da_semana[data_hoje.weekday()]
         hora_minuto = data_hoje.now().time()
+        # if hora_minuto < time(12, 0):
+        #     periodo = 'Bom dia'
+        # elif hora_minuto >= time(12, 0) and hora_minuto < time(19, 0):
+        #     periodo = 'Boa tarde'
+        # else:
+        #     periodo = 'Boa Noite'
         e_feriado = self.e_feriado(data_hoje.strftime('%d/%m/%Y'))
         if e_feriado != '':
             hora_inicio = e_feriado['inicio'].split(':')
             hora_fim = e_feriado['fim'].split(':')
             if hora_minuto < time(int(hora_inicio[0]), int(hora_inicio[1])+1):
-                body_msg = f'''Vimos que você mandou uma mensagem no contato do financeiro, sempre que precisar de suporte pode priorizar esses dois números:
-- (62) 3312-1502 — WhatsApp e chamadas 
-- (62) 99357-2050 — Somente WhatsApp
+                body_msg = f'''*[{data_log}]*
+                
+Olá ! Tudo bem?
+
+          Notamos que mandou uma mensagem em nosso contato destinado ao FINANCEIRO (62) 98642-7879. Sempre que precisar de SUPORTE pode priorizar esses dois contatos:
+- (62) 3312-1502 -- WhatsApp e chamadas 
+- (62) 99357-2050 - Somente WhatsApp
+
+
 Hoje nossos atendimentos iniciam à partir das {hora_inicio[0]}:{hora_inicio[1]}.
-*Você será atendido após as {hora_inicio[0]}:{hora_inicio[1]}*, por favor aguarde...'''
+
+_Você será atendido após as {hora_inicio[0]}:{hora_inicio[1]}*, por favor aguarde..._'''
                 self.enviar_mensagem_cliente(numero=numero, instancia=instancia_nova, body_msg=body_msg)
                 self.enviar_mensagem_grupo(numero)
                 result = False
             elif hora_minuto > time(int(hora_fim[0]), int(hora_fim[1])+1):
-                body_msg = f'''Olá, tudo bem?
-Vimos que você entrou em contato conosco *após as {hora_fim[0]}:{hora_fim[1]}*.
-Infelizmente nossos atendimentos por hoje estão encerrados, entre em contato conosco amanhã novamente que auxiliaremos você.'''
-                self.enviar_mensagem_cliente(numero=numero, instancia=instancia_antiga, body_msg=body_msg)
+                body_msg = f'''*[{data_log}]*
+
+Olá ! Tudo bem?
+
+          Notamos que mandou uma mensagem em nosso contato destinado ao FINANCEIRO (62) 98642-7879. Sempre que precisar de SUPORTE pode priorizar esses dois contatos:
+- (62) 3312-1502 -- WhatsApp e chamadas 
+- (62) 99357-2050 - Somente WhatsApp
+
+
+Notamos também que você entrou em contato conosco *após as {hora_fim[0]}:{hora_fim[1]}*.
+
+Infelizmente nossos atendimentos por hoje estão encerrados, porém seu atendimento já foi transferido para o nosso setor de *SUPORTE*, e logo pela manhã você será atendido...'''
+                self.enviar_mensagem_cliente(numero=numero, instancia=instancia_nova, body_msg=body_msg)
+                self.enviar_mensagem_grupo(numero)
                 result = False
         elif dia_da_semana == 'Sábado':
             if hora_minuto < time(7, 30+1):
-                body_msg = f'''Vimos que você mandou uma mensagem no contato do financeiro, sempre que precisar de suporte pode priorizar esses dois números:
-- (62) 3312-1502 — WhatsApp e chamadas 
-- (62) 99357-2050 — Somente WhatsApp
+                body_msg = f'''*[{data_log}]*
+
+Olá ! Tudo bem?
+
+          Notamos que mandou uma mensagem em nosso contato destinado ao FINANCEIRO (62) 98642-7879. Sempre que precisar de SUPORTE pode priorizar esses dois contatos:
+- (62) 3312-1502 -- WhatsApp e chamadas 
+- (62) 99357-2050 - Somente WhatsApp
+
+
 Hoje nossos atendimentos iniciam à partir das 07:30.
-*Você será atendido após as 07:30*, por favor aguarde...'''
+
+_*Você será atendido após as 07:30*, por favor aguarde..._'''
                 self.enviar_mensagem_cliente(numero=numero, instancia=instancia_nova, body_msg=body_msg)
                 self.enviar_mensagem_grupo(numero)
                 result = False
             elif hora_minuto > time(18, 30+1):
-                body_msg = '''Boa tarde, tudo bem?
-Vimos que você entrou em contato conosco *após as 18:30*.
-Infelizmente nossos atendimentos por hoje estão encerrados, entre em contato conosco no Domingo à partir das 08:00 que auxiliaremos você.
-Tenha, um bom final de semana!'''
-                self.enviar_mensagem_cliente(numero=numero, instancia=instancia_antiga, body_msg=body_msg)
+                body_msg = f'''*[{data_log}]*
+
+Olá ! Tudo bem?
+
+Notamos que mandou uma mensagem no contato do financeiro (62)98642-7879. Sempre que precisar de suporte pode priorizar esses dois números:
+- (62) 3312-1502 -- WhatsApp e chamadas 
+- (62) 99357-2050 - Somente WhatsApp
+
+
+Notamos também que você entrou em contato conosco *após as 18:30*.
+
+Infelizmente nossos atendimentos por hoje estão encerrados, porém seu atendimento já foi transferido para o nosso setor de *SUPORTE* você será atendido amanhã à partir das 08:00, tenha uma boa noite!'''
+                self.enviar_mensagem_cliente(numero=numero, instancia=instancia_nova, body_msg=body_msg)
+                self.enviar_mensagem_grupo(numero)
                 result = False
         elif dia_da_semana == 'Domingo':
             if hora_minuto > time(13, 0)+1:
-                body_msg = '''Boa tarde, tudo bem?
-Vimos que você entrou em contato conosco *após as 13:00*.
-Infelizmente nossos atendimentos por hoje estão encerrados, entre em contato conosco na Segunda-Feira à partir das 07:30 que auxiliaremos você.
-Tenha, um bom Domingo!'''
-                self.enviar_mensagem_cliente(numero=numero, instancia=instancia_antiga, body_msg=body_msg)
+                body_msg = f'''*[{data_log}]*
+
+Olá ! Tudo bem?
+
+          Notamos que mandou uma mensagem em nosso contato destinado ao FINANCEIRO (62) 98642-7879. Sempre que precisar de SUPORTE pode priorizar esses dois contatos:
+- (62) 3312-1502 -- WhatsApp e chamadas 
+- (62) 99357-2050 - Somente WhatsApp
+
+
+Notamos também que você entrou em contato conosco *após as 13:00*.
+
+Infelizmente nossos atendimentos por hoje estão encerrados, porém seu atendimento já foi transferido para o nosso setor de *SUPORTE* você será atendido amanhã à partir das 07:30.
+Tenha um bom Domingo!'''
+                self.enviar_mensagem_cliente(numero=numero, instancia=instancia_nova, body_msg=body_msg)
+                self.enviar_mensagem_grupo(numero)
                 result = False
             elif hora_minuto < time(8, 0+1):
-                body_msg = f'''Bom dia, tudo bem?
-Vimos que você mandou uma mensagem no contato do financeiro, sempre que precisar de suporte pode priorizar esses dois números:
-- (62) 3312-1502 — WhatsApp e chamadas 
-- (62) 99357-2050 — Somente WhatsApp
+                body_msg = f'''*[{data_log}]*
+
+Olá ! Tudo bem?
+
+          Notamos que mandou uma mensagem em nosso contato destinado ao FINANCEIRO (62) 98642-7879. Sempre que precisar de SUPORTE pode priorizar esses dois contatos:
+- (62) 3312-1502 -- WhatsApp e chamadas
+- (62) 99357-2050 - Somente WhatsApp
+
+
 Hoje nossos atendimentos iniciam à partir das 08:00.
-*Você será atendido após as 08:00*, por favor aguarde...'''
+
+_*Você será atendido após as 08:00*, por favor aguarde..._'''
                 self.enviar_mensagem_cliente(numero=numero, instancia=instancia_nova, body_msg=body_msg)
                 self.enviar_mensagem_grupo(numero)
                 result = False
         else:
             if hora_minuto < time(7, 30+1):
-                body_msg = f'''Vimos que você mandou uma mensagem no contato do financeiro, sempre que precisar de suporte pode priorizar esses dois números:
-- (62) 3312-1502 — WhatsApp e chamadas 
-- (62) 99357-2050 — Somente WhatsApp
+                body_msg = f'''*[{data_log}]*
+
+Olá ! Tudo bem?
+
+          Notamos que mandou uma mensagem em nosso contato destinado ao FINANCEIRO (62) 98642-7879. Sempre que precisar de SUPORTE pode priorizar esses dois contatos:
+- (62) 3312-1502 -- WhatsApp e chamadas 
+- (62) 99357-2050 - Somente WhatsApp
+
+
 Hoje nossos atendimentos iniciam à partir das 07:30.
-*Você será atendido após as 07:30*, por favor aguarde...'''
+
+_*Você será atendido após as 07:30*, por favor aguarde..._'''
                 self.enviar_mensagem_cliente(numero=numero, instancia=instancia_nova, body_msg=body_msg)
                 self.enviar_mensagem_grupo(numero)
                 result = False
             elif hora_minuto > time(22, 0+1):
-                body_msg = '''Boa noite, tudo bem?
-Vimos que você entrou em contato conosco *após as 22:00*.
-Infelizmente nossos atendimentos por hoje estão encerrados, entre em contato conosco no amanhã à partir das 07:30 que auxiliaremos você.
-Tenha, uma boa noite de sono!'''
-                self.enviar_mensagem_cliente(numero=numero, instancia=instancia_antiga, body_msg=body_msg)
+                body_msg = f'''*[{data_log}]*
+
+Olá ! Tudo bem?
+
+          Notamos que mandou uma mensagem em nosso contato destinado ao FINANCEIRO (62) 98642-7879. Sempre que precisar de SUPORTE pode priorizar esses dois contatos:
+- (62) 3312-1502 -- WhatsApp e chamadas 
+- (62) 99357-2050 - Somente WhatsApp
+
+
+Notamos também que você entrou em contato conosco *após as 22:00*.
+
+Infelizmente nossos atendimentos por hoje estão encerrados, porém seu atendimento já foi transferido para o nosso setor de *SUPORTE* você será atendido amanhã à partir das 07:30.
+
+Tenha uma boa noite de sono!'''
+                self.enviar_mensagem_cliente(numero=numero, instancia=instancia_nova, body_msg=body_msg)
+                self.enviar_mensagem_grupo(numero)
                 result = False
         return result
 
@@ -239,8 +329,8 @@ Tenha, uma boa noite de sono!'''
     def iniciar_observacao_do_ws(self):
         @self.sio.on('messages.upsert')
         def mensagem_recebida(req):
-            instancia = req['instance']
-            if instancia == 'neto':
+            instancia_api = req['instance']
+            if instancia_api == instancia_antiga:
                 if not self.e_grupo(req) and not self.foi_eu_que_mandei(req):
                     numero_api = req['data']['key']['remoteJid']
                     numero_formatado = self.formatar_numero(numero_api)
@@ -250,13 +340,13 @@ Tenha, uma boa noite de sono!'''
                         if ultima_mensagem_recebida >= 15:
                             clientes_que_chamaram[numero_api] = data_hora_que_chamou
                             if self.e_horario_comercial(numero_formatado):
+                                self.enviar_mensagem_cliente(numero=numero_formatado, instancia=instancia_nova)
                                 self.enviar_mensagem_grupo(numero_formatado)
-                                self.enviar_mensagem_cliente(numero_formatado, instancia_nova)
                     else:
                         clientes_que_chamaram[numero_api] = data_hora_que_chamou
                         if self.e_horario_comercial(numero_formatado):
+                            self.enviar_mensagem_cliente(numero=numero_formatado, instancia=instancia_nova)
                             self.enviar_mensagem_grupo(numero_formatado)
-                            self.enviar_mensagem_cliente(numero_formatado, instancia_nova)
     # ==========================================
     # Seção de Requisições GET
     # ==========================================

@@ -33,6 +33,7 @@ share/python-wheels/
 *.manifest
 *.spec
 *.exe
+*.ink
 
 # Unit test / coverage reports
 htmlcov/
