@@ -19,6 +19,11 @@ URL_WS = "https://chat.nside.com.br"
 instancia_nova = "telefone-sistemas"
 instancia_antiga = '556286427879-62986427879'
 APIKEY = "7hiEkUh2qbCNzoPSndk6vOnFvCmsVwILhN7xdJPVhgju8nagew8XD4DiytCyXg0dSzMpDafWhoc"
+# ----------------Para testes ----------------------
+# URL_WS = "http://localhost:8080"
+# instancia_nova = "t2"
+# instancia_antiga = 't1'
+# APIKEY = "429683C4C977415CAAFCCE10F7D57E11"
 ws_rodando = False
 
 
@@ -69,7 +74,10 @@ class App(ctk.CTk):
         except:
             return False
     def formatar_numero(self, numero: str):
-        index = numero.find('@')
+        if '-' in numero:
+            index = numero.find('-')
+        else:
+            index = numero.find('@')
         return numero[0:index]
 
     def enviar_mensagem_cliente(self, numero: str, instancia: str, body_msg=''): # passe a instancia do número novo
@@ -211,40 +219,40 @@ Infelizmente nossos atendimentos por hoje estão encerrados, porém seu atendime
                 self.enviar_mensagem_cliente(numero=numero, instancia=instancia_nova, body_msg=body_msg)
                 self.enviar_mensagem_grupo(numero)
                 result = False
-        elif dia_da_semana == 'Domingo':
-            if hora_minuto > time(13, 0)+1:
-                body_msg = f'''*[{data_log}]*
+#         elif dia_da_semana == 'Domingo':
+#             if hora_minuto > time(13, 0)+1:
+#                 body_msg = f'''*[{data_log}]*
 
-Olá ! Tudo bem?
+# Olá ! Tudo bem?
 
-          Notamos que mandou uma mensagem em nosso contato destinado ao FINANCEIRO (62) 98642-7879. Sempre que precisar de SUPORTE pode priorizar esses dois contatos:
-- (62) 3312-1502 -- WhatsApp e chamadas 
-- (62) 99357-2050 - Somente WhatsApp
-
-
-Notamos também que você entrou em contato conosco *após as 13:00*.
-
-Infelizmente nossos atendimentos por hoje estão encerrados, porém seu atendimento já foi transferido para o nosso setor de *SUPORTE* você será atendido amanhã à partir das 07:30.
-Tenha um bom Domingo!'''
-                self.enviar_mensagem_cliente(numero=numero, instancia=instancia_nova, body_msg=body_msg)
-                self.enviar_mensagem_grupo(numero)
-                result = False
-            elif hora_minuto < time(8, 0+1):
-                body_msg = f'''*[{data_log}]*
-
-Olá ! Tudo bem?
-
-          Notamos que mandou uma mensagem em nosso contato destinado ao FINANCEIRO (62) 98642-7879. Sempre que precisar de SUPORTE pode priorizar esses dois contatos:
-- (62) 3312-1502 -- WhatsApp e chamadas
-- (62) 99357-2050 - Somente WhatsApp
+#           Notamos que mandou uma mensagem em nosso contato destinado ao FINANCEIRO (62) 98642-7879. Sempre que precisar de SUPORTE pode priorizar esses dois contatos:
+# - (62) 3312-1502 -- WhatsApp e chamadas 
+# - (62) 99357-2050 - Somente WhatsApp
 
 
-Hoje nossos atendimentos iniciam à partir das 08:00.
+# Notamos também que você entrou em contato conosco *após as 13:00*.
 
-_*Você será atendido após as 08:00*, por favor aguarde..._'''
-                self.enviar_mensagem_cliente(numero=numero, instancia=instancia_nova, body_msg=body_msg)
-                self.enviar_mensagem_grupo(numero)
-                result = False
+# Infelizmente nossos atendimentos por hoje estão encerrados, porém seu atendimento já foi transferido para o nosso setor de *SUPORTE* você será atendido amanhã à partir das 07:30.
+# Tenha um bom Domingo!'''
+#                 self.enviar_mensagem_cliente(numero=numero, instancia=instancia_nova, body_msg=body_msg)
+#                 self.enviar_mensagem_grupo(numero)
+#                 result = False
+#             elif hora_minuto < time(8, 0+1):
+#                 body_msg = f'''*[{data_log}]*
+
+# Olá ! Tudo bem?
+
+#           Notamos que mandou uma mensagem em nosso contato destinado ao FINANCEIRO (62) 98642-7879. Sempre que precisar de SUPORTE pode priorizar esses dois contatos:
+# - (62) 3312-1502 -- WhatsApp e chamadas
+# - (62) 99357-2050 - Somente WhatsApp
+
+
+# Hoje nossos atendimentos iniciam à partir das 08:00.
+
+# _*Você será atendido após as 08:00*, por favor aguarde..._'''
+#                 self.enviar_mensagem_cliente(numero=numero, instancia=instancia_nova, body_msg=body_msg)
+#                 self.enviar_mensagem_grupo(numero)
+#                 result = False
         else:
             if hora_minuto < time(7, 30+1):
                 body_msg = f'''*[{data_log}]*
@@ -307,7 +315,7 @@ Tenha uma boa noite de sono!'''
             self.status_ws.configure(text="Conectando...", text_color="yellow")
             if not ws_rodando:
                 self.log("Tentando conectar ao WebSocket...")
-                self.sio.connect(f"{URL_WS}/{instancia_antiga}", transports=['websocket'])
+                self.sio.connect(f"{URL_WS}/{instancia_antiga}", transports=['websocket'], headers={'apiKey': APIKEY})
                 ws_rodando = True
                 self.status_ws.configure(text="Conectado!", text_color="green")
                 self.log("✅ Conectado ao WebSocket com sucesso!")
@@ -349,7 +357,7 @@ Tenha uma boa noite de sono!'''
         @self.sio.on('messages.upsert')
         def mensagem_recebida(req):
             threading.Thread(target=procedure, args=(req,), daemon=True).start()
-            
+
     # ==========================================
     # Seção de Requisições GET
     # ==========================================
