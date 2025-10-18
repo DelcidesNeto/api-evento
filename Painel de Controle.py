@@ -33,7 +33,7 @@ ws_rodando = False
 class App(ctk.CTk):
     def __init__(self):
         super().__init__()
-        self.title("Painel de Controle")
+        self.title("Painel de Controle v1.1.0")
         self.iconbitmap(self.resource_path('recarregar.ico'))
         self.geometry("600x850")
         ctk.set_appearance_mode("dark")
@@ -68,17 +68,24 @@ class App(ctk.CTk):
 
         return os.path.join(base_path, relative_path)
     def e_grupo(self, dados: dict):
+            #id_participante_grupo = dados['data']['key']['participant']
+            numero = dados['data']['key']['remoteJid']
+            if '@g' in numero:
+                return True
+            else:
+                return False
+            
+    def formatar_numero(self, req):
+        # index = numero.find('@')
+        # return numero[0:index]
         try:
-            id_participante_grupo = dados['data']['key']['participant']
-            return True
-        except:
-            return False
-    def formatar_numero(self, numero: str):
-        if '-' in numero:
-            index = numero.find('-')
-        else:
+            numero = req['data']['key']['senderPn']
             index = numero.find('@')
-        return numero[0:index]
+            return numero[0:index]
+        except:
+            numero = req['data']['key']['remoteJid']
+            index = numero.find('@')
+            return numero[0:index]
 
     def enviar_mensagem_cliente(self, numero: str, instancia: str, body_msg=''): # passe a instancia do número novo
         if body_msg == '':
@@ -136,7 +143,9 @@ _Aguarde. Você está sendo transferido para um atendente humano..._'''
                 return feriados_json[data]
             else:
                 return ''
-
+    def adiconar_log_arq(self, log: str):
+        with open('log.txt', 'at', encoding='utf-8') as arq:
+            arq.write(log)
     def e_horario_comercial(self, numero: str):
         result = True
         dias_da_semana = {0: 'Segunda', 1: 'Terça', 2: 'Quarta', 3: 'Quinta', 4: 'Sexta', 5: 'Sábado', 6: 'Domingo'}
@@ -156,7 +165,7 @@ _Aguarde. Você está sendo transferido para um atendente humano..._'''
             hora_fim = e_feriado['fim'].split(':')
             if hora_minuto < time(int(hora_inicio[0]), int(hora_inicio[1])+1):
                 body_msg = f'''*[{data_log}]*
-                
+
 Olá ! Tudo bem?
 
           Notamos que mandou uma mensagem em nosso contato destinado ao FINANCEIRO (62) 98642-7879. Sempre que precisar de SUPORTE pode priorizar esses dois contatos:
@@ -340,7 +349,10 @@ Tenha uma boa noite de sono!'''
             if instancia_api == instancia_antiga:
                 if not self.e_grupo(req) and not self.foi_eu_que_mandei(req):
                     numero_api = req['data']['key']['remoteJid']
-                    numero_formatado = self.formatar_numero(numero_api)
+                    data_log = datetime.today().astimezone(pytz.timezone('America/Sao_Paulo')).strftime('%d/%m/%Y %H:%M:%S')
+                    log_arq = f'---------------------------\n{data_log}\nJson: {req}\nNumero de telefone original sem formatação para análise: {numero_api}\n---------------------------\n'
+                    self.adiconar_log_arq(log_arq)
+                    numero_formatado = self.formatar_numero(req)
                     data_hora_que_chamou = tempo_api()
                     if numero_api in clientes_que_chamaram:
                         ultima_mensagem_recebida = (data_hora_que_chamou-clientes_que_chamaram[numero_api])/60

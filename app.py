@@ -57,8 +57,10 @@ def envio():
     try:
         data = request.get_json()
         numero_formatado = formatar_celular(data['numero'])
+        cidade = data['cidade']
         enviar_imagem_com_texto(data['nome'], numero_formatado)
-        enviar_localizacao(numero_formatado)
+        if cidade != 'ITAPURANGA':
+            enviar_localizacao(numero_formatado)
         return jsonify({'status_request': 'ok'})
     except Exception as e:
         return jsonify({'status_request': f'error: {e}'})
