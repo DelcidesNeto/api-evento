@@ -4,7 +4,7 @@ app = Flask(__name__)
 
 
 def formatar_celular(numero: str):
-    numero_velho = numero.replace('(', '').replace(')', '').replace('-', '')
+    numero_velho = numero.replace('(', '').replace(')', '').replace('-', '').replace(' ', '')
     numero_novo = '55'+numero_velho[0:2]+numero_velho[3:]
     return numero_novo
 

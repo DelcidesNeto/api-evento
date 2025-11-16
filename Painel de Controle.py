@@ -53,7 +53,7 @@ class App(ctk.CTk):
         self.requisicoes_ativas = False
         self.carregar_feriados()
         self.iniciar_ws_thread()
-        self.toggle_requisicoes()
+        # self.toggle_requisicoes()
     # =========================================
     # Seção funções do WebSocket
     # =========================================
@@ -191,7 +191,7 @@ Olá ! Tudo bem?
 
 Notamos também que você entrou em contato conosco *após as {hora_fim[0]}:{hora_fim[1]}*.
 
-Infelizmente nossos atendimentos por hoje estão encerrados, porém seu atendimento já foi transferido para o nosso setor de *SUPORTE*, e logo pela manhã você será atendido...'''
+Infelizmente nossos atendimentos por hoje estão encerrados, porém seu atendimento já foi transferido para o nosso setor de *SUPORTE*, e você será atendido no próximo dia útil à partir das 07:30'''
                 self.enviar_mensagem_cliente(numero=numero, instancia=instancia_nova, body_msg=body_msg)
                 self.enviar_mensagem_grupo(numero)
                 result = False
@@ -224,34 +224,32 @@ Notamos que mandou uma mensagem no contato do financeiro (62)98642-7879. Sempre 
 
 Notamos também que você entrou em contato conosco *após as 18:30*.
 
-Infelizmente nossos atendimentos por hoje estão encerrados, porém seu atendimento já foi transferido para o nosso setor de *SUPORTE* você será atendido amanhã à partir das 08:00, tenha uma boa noite!'''
+Infelizmente nossos atendimentos por hoje estão encerrados, porém seu atendimento já foi transferido para o nosso setor de *SUPORTE* você será atendido no próximo dia útil à partir das 07:30, tenha uma boa noite!'''
                 self.enviar_mensagem_cliente(numero=numero, instancia=instancia_nova, body_msg=body_msg)
                 self.enviar_mensagem_grupo(numero)
                 result = False
-#         elif dia_da_semana == 'Domingo':
-#             if hora_minuto > time(13, 0)+1:
-#                 body_msg = f'''*[{data_log}]*
+        elif dia_da_semana == 'Domingo':
+            # if hora_minuto > time(13, 0)+1:
+            body_msg = f'''*[{data_log}]*
+
+Olá ! Tudo bem?
+
+          Notamos que mandou uma mensagem em nosso contato destinado ao FINANCEIRO (62) 98642-7879. Sempre que precisar de SUPORTE pode priorizar esses dois contatos:
+- (62) 3312-1502 -- WhatsApp e chamadas 
+- (62) 99357-2050 - Somente WhatsApp
+
+
+Infelizmente nossos atendimentos por hoje estão encerrados, porém seu atendimento já foi transferido para o nosso setor de *SUPORTE* você será atendido no próximo dia útil à partir das 07:30.
+Tenha um bom Domingo!'''
+            self.enviar_mensagem_cliente(numero=numero, instancia=instancia_nova, body_msg=body_msg)
+            self.enviar_mensagem_grupo(numero)
+            result = False
+#         elif hora_minuto < time(8, 0+1):
+#             body_msg = f'''*[{data_log}]*
 
 # Olá ! Tudo bem?
 
-#           Notamos que mandou uma mensagem em nosso contato destinado ao FINANCEIRO (62) 98642-7879. Sempre que precisar de SUPORTE pode priorizar esses dois contatos:
-# - (62) 3312-1502 -- WhatsApp e chamadas 
-# - (62) 99357-2050 - Somente WhatsApp
-
-
-# Notamos também que você entrou em contato conosco *após as 13:00*.
-
-# Infelizmente nossos atendimentos por hoje estão encerrados, porém seu atendimento já foi transferido para o nosso setor de *SUPORTE* você será atendido amanhã à partir das 07:30.
-# Tenha um bom Domingo!'''
-#                 self.enviar_mensagem_cliente(numero=numero, instancia=instancia_nova, body_msg=body_msg)
-#                 self.enviar_mensagem_grupo(numero)
-#                 result = False
-#             elif hora_minuto < time(8, 0+1):
-#                 body_msg = f'''*[{data_log}]*
-
-# Olá ! Tudo bem?
-
-#           Notamos que mandou uma mensagem em nosso contato destinado ao FINANCEIRO (62) 98642-7879. Sempre que precisar de SUPORTE pode priorizar esses dois contatos:
+#         Notamos que mandou uma mensagem em nosso contato destinado ao FINANCEIRO (62) 98642-7879. Sempre que precisar de SUPORTE pode priorizar esses dois contatos:
 # - (62) 3312-1502 -- WhatsApp e chamadas
 # - (62) 99357-2050 - Somente WhatsApp
 
@@ -259,9 +257,9 @@ Infelizmente nossos atendimentos por hoje estão encerrados, porém seu atendime
 # Hoje nossos atendimentos iniciam à partir das 08:00.
 
 # _*Você será atendido após as 08:00*, por favor aguarde..._'''
-#                 self.enviar_mensagem_cliente(numero=numero, instancia=instancia_nova, body_msg=body_msg)
-#                 self.enviar_mensagem_grupo(numero)
-#                 result = False
+#             self.enviar_mensagem_cliente(numero=numero, instancia=instancia_nova, body_msg=body_msg)
+#             self.enviar_mensagem_grupo(numero)
+#             result = False
         else:
             if hora_minuto < time(7, 30+1):
                 body_msg = f'''*[{data_log}]*
@@ -291,7 +289,7 @@ Olá ! Tudo bem?
 
 Notamos também que você entrou em contato conosco *após as 22:00*.
 
-Infelizmente nossos atendimentos por hoje estão encerrados, porém seu atendimento já foi transferido para o nosso setor de *SUPORTE* você será atendido amanhã à partir das 07:30.
+Infelizmente nossos atendimentos por hoje estão encerrados, porém seu atendimento já foi transferido para o nosso setor de *SUPORTE* você será atendido no próximo dia útil à partir das 07:30.
 
 Tenha uma boa noite de sono!'''
                 self.enviar_mensagem_cliente(numero=numero, instancia=instancia_nova, body_msg=body_msg)
