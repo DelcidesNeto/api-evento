@@ -33,7 +33,7 @@ ws_rodando = False
 class App(ctk.CTk):
     def __init__(self):
         super().__init__()
-        self.title("Painel de Controle v1.1.0")
+        self.title("Painel de Controle v1.2.0")
         self.iconbitmap(self.resource_path('recarregar.ico'))
         self.geometry("600x850")
         ctk.set_appearance_mode("dark")
@@ -69,7 +69,7 @@ class App(ctk.CTk):
         return os.path.join(base_path, relative_path)
     def e_grupo(self, dados: dict):
             #id_participante_grupo = dados['data']['key']['participant']
-            numero = dados['data']['key']['remoteJid']
+            numero = self.get_remote_jid(dados)
             if '@g' in numero:
                 return True
             else:
@@ -339,14 +339,27 @@ Tenha uma boa noite de sono!'''
                 self.status_ws.configure(text=f"Erro: {e}", text_color="red")
                 self.log(f"❌ Erro ao conectar WebSocket: {e}")
 
-    
-    
+    def get_remote_jid(self, socket):
+        data = socket['data']
+
+        try:
+            remote_jid_str = data['remoteJid']
+            if "@lid" in remote_jid_str:
+                return data['remoteJidAlt']
+            return remote_jid_str
+        except:
+            key = data.get("key", {})
+            remote_jid_str = key.get("remoteJid", "")
+            if "@lid" in remote_jid_str:
+                return key.get("remoteJidAlt", "@g.us")
+            return remote_jid_str
+
     def iniciar_observacao_do_ws(self):
         def procedure(req):
             instancia_api = req['instance']
             if instancia_api == instancia_antiga:
                 if not self.e_grupo(req) and not self.foi_eu_que_mandei(req):
-                    numero_api = req['data']['key']['remoteJid']
+                    numero_api = self.get_remote_jid(req)
                     data_log = datetime.today().astimezone(pytz.timezone('America/Sao_Paulo')).strftime('%d/%m/%Y %H:%M:%S')
                     log_arq = f'---------------------------\n{data_log}\nJson: {req}\nNumero de telefone original sem formatação para análise: {numero_api}\n---------------------------\n'
                     self.adiconar_log_arq(log_arq)
