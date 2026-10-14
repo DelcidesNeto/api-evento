@@ -17,7 +17,7 @@ FERIADOS_FILE = os.path.join(os.getcwd(), "feriados_personalizados.json")
 URL_API = "https://api-evento-xf4o.onrender.com/"
 URL_WS = "https://chat.nside.com.br"
 instancia_nova = "telefone-sistemas"
-instancia_antiga = '556286427879-62986427879'
+instancia_antiga = '2'
 APIKEY = "7hiEkUh2qbCNzoPSndk6vOnFvCmsVwILhN7xdJPVhgju8nagew8XD4DiytCyXg0dSzMpDafWhoc"
 # ----------------Para testes ----------------------
 # URL_WS = "http://localhost:8080"
@@ -33,7 +33,7 @@ ws_rodando = False
 class App(ctk.CTk):
     def __init__(self):
         super().__init__()
-        self.title("Painel de Controle v1.2.0")
+        self.title("Painel de Controle v2.0.0")
         self.iconbitmap(self.resource_path('recarregar.ico'))
         self.geometry("600x850")
         ctk.set_appearance_mode("dark")
@@ -75,17 +75,9 @@ class App(ctk.CTk):
             else:
                 return False
             
-    def formatar_numero(self, req):
-        # index = numero.find('@')
-        # return numero[0:index]
-        try:
-            numero = req['data']['key']['senderPn']
-            index = numero.find('@')
-            return numero[0:index]
-        except:
-            numero = req['data']['key']['remoteJid']
-            index = numero.find('@')
-            return numero[0:index]
+    def formatar_numero(self, remoteJid: str):
+        index = remoteJid.find('@')
+        return remoteJid[0:index]
 
     def enviar_mensagem_cliente(self, numero: str, instancia: str, body_msg=''): # passe a instancia do número novo
         if body_msg == '':
@@ -328,6 +320,7 @@ Tenha uma boa noite de sono!'''
                 self.log("✅ Conectado ao WebSocket com sucesso!")
                 self.btn_ws.configure(text='Desconectar')
                 threading.Thread(target=self.iniciar_observacao_do_ws, daemon=True).start()
+                self.sio.wait()
             else:
                 self.sio.disconnect()
                 ws_rodando = False
@@ -338,6 +331,9 @@ Tenha uma boa noite de sono!'''
             if 'Already connected' not in str(e):
                 self.status_ws.configure(text=f"Erro: {e}", text_color="red")
                 self.log(f"❌ Erro ao conectar WebSocket: {e}")
+                sleep(1)
+                self.iniciar_ws_thread()
+
 
     def get_remote_jid(self, socket):
         data = socket['data']
@@ -348,13 +344,14 @@ Tenha uma boa noite de sono!'''
                 return data['remoteJidAlt']
             return remote_jid_str
         except:
-            key = data.get("key", {})
-            remote_jid_str = key.get("remoteJid", "")
-            if "@lid" in remote_jid_str:
-                return key.get("remoteJidAlt", "@g.us")
-            return remote_jid_str
-
+            key = data['key']
+            remote_jid = key['remoteJid']
+            if "@lid" in remote_jid:
+                remote_jid_alt = key['remoteJidAlt']
+                return remote_jid_alt
+            return remote_jid
     def iniciar_observacao_do_ws(self):
+        
         def procedure(req):
             instancia_api = req['instance']
             if instancia_api == instancia_antiga:
@@ -363,7 +360,7 @@ Tenha uma boa noite de sono!'''
                     data_log = datetime.today().astimezone(pytz.timezone('America/Sao_Paulo')).strftime('%d/%m/%Y %H:%M:%S')
                     log_arq = f'---------------------------\n{data_log}\nJson: {req}\nNumero de telefone original sem formatação para análise: {numero_api}\n---------------------------\n'
                     self.adiconar_log_arq(log_arq)
-                    numero_formatado = self.formatar_numero(req)
+                    numero_formatado = self.formatar_numero(numero_api)
                     data_hora_que_chamou = tempo_api()
                     if numero_api in clientes_que_chamaram:
                         ultima_mensagem_recebida = (data_hora_que_chamou-clientes_que_chamaram[numero_api])/60
@@ -380,6 +377,9 @@ Tenha uma boa noite de sono!'''
         @self.sio.on('messages.upsert')
         def mensagem_recebida(req):
             threading.Thread(target=procedure, args=(req,), daemon=True).start()
+        @self.sio.on('disconnect')
+        def tentar_reconectar():
+            self.iniciar_ws_thread()
 
     # ==========================================
     # Seção de Requisições GET
